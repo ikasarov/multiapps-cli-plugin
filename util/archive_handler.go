@@ -16,18 +16,20 @@ import (
 const defaultDescriptorLocation string = "META-INF/mtad.yaml"
 const defaultDescriptorName string = "mtad.yaml"
 
-type mtaDescriptor struct {
+type MtaDescriptor struct {
 	SchemaVersion string `yaml:"_schema-version,omitempty"`
 	ID            string `yaml:"ID,omitempty"`
 	Version       string `yaml:"version,omitempty"`
+	Namespace     string `yaml:"namespace,omitempty"`
 }
 
-// GetMtaIDFromArchive retrieves MTA ID from MTA archive
-func GetMtaIDFromArchive(mtaArchveFilePath string) (string, error) {
+// GetMtaDescriptorFromArchive retrieves MTA ID from MTA archive
+func GetMtaDescriptorFromArchive(mtaArchveFilePath string) (MtaDescriptor, error) {
+	var descriptor MtaDescriptor
 	// Open the mta archive
 	mtaArchiveReader, err := zip.OpenReader(mtaArchveFilePath)
 	if err != nil {
-		return "", err
+		return descriptor, err
 	}
 	defer mtaArchiveReader.Close()
 
@@ -37,23 +39,22 @@ func GetMtaIDFromArchive(mtaArchveFilePath string) (string, error) {
 
 			descriptorBytes, err := readZipFile(file)
 			if err != nil {
-				return "", err
+				return descriptor, err
 			}
 
 			// Unmarshal the content of the temporary deployment descriptor into struct
-			var descriptor mtaDescriptor
 			err = yaml.Unmarshal(descriptorBytes, &descriptor)
 			if err != nil {
-				return "", err
+				return descriptor, err
 			}
 
 			// Return the MTA ID extracted from the deployment descriptor, if it is set
 			if descriptor.ID != "" {
-				return descriptor.ID, nil
+				return descriptor, nil
 			}
 		}
 	}
-	return "", errors.New("Could not get MTA id from archive")
+	return descriptor, errors.New("Could not get MTA id from archive")
 }
 
 func CreateMtaArchive(source, target string) error {

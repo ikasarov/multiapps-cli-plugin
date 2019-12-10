@@ -22,6 +22,7 @@ const (
 	timeoutOpt                 = "t"
 	versionRuleOpt             = "version-rule"
 	noStartOpt                 = "no-start"
+	namespaceOpt               = "namespace"
 	useNamespacesOpt           = "use-namespaces"
 	noNamespacesForServicesOpt = "no-namespaces-for-services"
 	deleteServiceKeysOpt       = "delete-service-keys"
@@ -94,6 +95,7 @@ func (c *DeployCommand) GetPluginCommand() plugin.Command {
 				forceOpt:                              "Force deploy without confirmation for aborting conflicting processes",
 				moduleOpt:                             "Deploy list of modules which are contained in the deployment descriptor, in the current location",
 				resourceOpt:                           "Deploy list of resources which are contained in the deployment descriptor, in the current location",
+				namespaceOpt:                          "Namespace for the mta, applied to app and service names as well",
 				util.GetShortOption(noStartOpt):       "Do not start apps",
 				util.GetShortOption(useNamespacesOpt): "Use namespaces in app and service names",
 				util.GetShortOption(noNamespacesForServicesOpt):    "Do not use namespaces in service names",
@@ -130,6 +132,7 @@ func deployCommandFlagsDefiner() CommandFlagsDefiner {
 		optionValues[versionRuleOpt] = flags.String(versionRuleOpt, "", "")
 		optionValues[deleteServicesOpt] = flags.Bool(deleteServicesOpt, false, "")
 		optionValues[noStartOpt] = flags.Bool(noStartOpt, false, "")
+		optionValues[namespaceOpt] = flags.String(namespaceOpt, "", "")
 		optionValues[useNamespacesOpt] = flags.Bool(useNamespacesOpt, false, "")
 		optionValues[noNamespacesForServicesOpt] = flags.Bool(noNamespacesForServicesOpt, false, "")
 		optionValues[deleteServiceKeysOpt] = flags.Bool(deleteServiceKeysOpt, false, "")
@@ -155,6 +158,7 @@ func deployProcessParametersSetter() ProcessParametersSetter {
 		processBuilder.Parameter("deleteServiceKeys", strconv.FormatBool(GetBoolOpt(deleteServiceKeysOpt, optionValues)))
 		processBuilder.Parameter("deleteServices", strconv.FormatBool(GetBoolOpt(deleteServicesOpt, optionValues)))
 		processBuilder.Parameter("noStart", strconv.FormatBool(GetBoolOpt(noStartOpt, optionValues)))
+		processBuilder.Parameter("namespace", GetStringOpt(namespaceOpt, optionValues))
 		processBuilder.Parameter("useNamespaces", strconv.FormatBool(GetBoolOpt(useNamespacesOpt, optionValues)))
 		processBuilder.Parameter("useNamespacesForServices", strconv.FormatBool(!GetBoolOpt(noNamespacesForServicesOpt, optionValues)))
 		processBuilder.Parameter("deleteServiceBrokers", strconv.FormatBool(GetBoolOpt(deleteServiceBrokersOpt, optionValues)))
@@ -213,6 +217,7 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 	action := GetStringOpt(actionOpt, optionValues)
 	force := GetBoolOpt(forceOpt, optionValues)
 	retries := GetUintOpt(retriesOpt, optionValues)
+	namespace := GetStringOpt(namespaceOpt, optionValues)
 
 	context, err := c.GetContext()
 	if err != nil {
@@ -259,7 +264,7 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 	}
 
 	// Extract mta id from archive file
-	mtaID, err := util.GetMtaIDFromArchive(mtaArchivePath)
+	descriptor, err := util.GetMtaDescriptorFromArchive(mtaArchivePath)
 	if os.IsNotExist(err) {
 		ui.Failed("Could not find file %s", terminal.EntityNameColor(mtaArchivePath))
 		return Failure
@@ -268,8 +273,10 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 	}
 
+	ui.Say("Command line value for namespace: %s\n Extension descriptor value for namespace: %s\n Descriptor value for namespace: %s", terminal.EntityNameColor(namespace), "", terminal.EntityNameColor(descriptor.Namespace))
+
 	// Check for an ongoing operation for this MTA ID and abort it
-	wasAborted, err := c.CheckOngoingOperation(mtaID, host, force)
+	wasAborted, err := c.CheckOngoingOperation(descriptor.ID, host, force)
 	if err != nil {
 		ui.Failed("Could not get MTA operations: %s", baseclient.NewClientError(err))
 		return Failure
