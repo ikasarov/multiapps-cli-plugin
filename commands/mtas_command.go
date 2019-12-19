@@ -74,9 +74,9 @@ func (c *MtasCommand) Execute(args []string) ExecutionStatus {
 
 	// Print all deployed MTAs
 	if len(mtas) > 0 {
-		table := ui.Table([]string{"mta id", "version"})
+		table := ui.Table([]string{"mta id", "version", "namespace"})
 		for _, mta := range mtas {
-			table.Add(mta.Metadata.ID, util.GetMtaVersionAsString(mta))
+			table.Add(mta.Metadata.ID, util.GetMtaVersionAsString(mta), mta.Metadata.Namespace)
 		}
 		table.Print()
 	} else {

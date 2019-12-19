@@ -33,7 +33,7 @@ func (c *UndeployCommand) GetPluginCommand() plugin.Command {
 		HelpText: "Undeploy a multi-target app",
 		UsageDetails: plugin.Usage{
 			Usage: `Undeploy a multi-target app
-   cf undeploy MTA_ID [-u URL] [-f] [--retries RETRIES] [--delete-services] [--delete-service-brokers] [--no-restart-subscribed-apps] [--do-not-fail-on-missing-permissions] [--abort-on-error]
+   cf undeploy MTA_ID [-u URL] [-f] [--retries RETRIES] [--namespace NAMESPACE] [--delete-services] [--delete-service-brokers] [--no-restart-subscribed-apps] [--do-not-fail-on-missing-permissions] [--abort-on-error]
 
    Perform action on an active undeploy operation
    cf undeploy -i OPERATION_ID -a ACTION [-u URL]`,
@@ -48,6 +48,8 @@ func (c *UndeployCommand) GetPluginCommand() plugin.Command {
 				util.GetShortOption(noFailOnMissingPermissionsOpt): "Do not fail on missing permissions for admin operations",
 				util.GetShortOption(abortOnErrorOpt):               "Auto-abort the process on any errors",
 				util.GetShortOption(retriesOpt):                    "Retry the operation N times in case a non-content error occurs (default 3)",
+				// TODO: find out what's going on here??
+				util.GetShortOption(namespaceOpt): "Specify the (optional) namespace the target mta is in",
 			},
 		},
 	}
@@ -59,6 +61,7 @@ func (c *UndeployCommand) Execute(args []string) ExecutionStatus {
 
 	var host string
 	var operationID string
+	var namespace string
 	var actionID string
 	var force bool
 	var deleteServices bool
@@ -74,6 +77,7 @@ func (c *UndeployCommand) Execute(args []string) ExecutionStatus {
 	}
 	flags.BoolVar(&force, forceOpt, false, "")
 	flags.StringVar(&operationID, operationIDOpt, "", "")
+	flags.StringVar(&namespace, namespaceOpt, "", "")
 	flags.StringVar(&actionID, actionOpt, "", "")
 	flags.BoolVar(&deleteServices, deleteServicesOpt, false, "")
 	flags.BoolVar(&noRestartSubscribedApps, noRestartSubscribedAppsOpt, false, "")
@@ -131,7 +135,7 @@ func (c *UndeployCommand) Execute(args []string) ExecutionStatus {
 	}
 
 	// Check for an ongoing operation for this MTA ID and abort it
-	wasAborted, err := c.CheckOngoingOperation(mtaID, host, force)
+	wasAborted, err := c.CheckOngoingOperation(mtaID, namespace, host, force)
 	if err != nil {
 		ui.Failed(err.Error())
 		return Failure
@@ -148,6 +152,7 @@ func (c *UndeployCommand) Execute(args []string) ExecutionStatus {
 	processBuilder.Parameter("deleteServiceBrokers", strconv.FormatBool(deleteServiceBrokers))
 	processBuilder.Parameter("noFailOnMissingPermissions", strconv.FormatBool(noFailOnMissingPermissions))
 	processBuilder.Parameter("abortOnError", strconv.FormatBool(abortOnError))
+	processBuilder.Parameter("namespace", namespace)
 	operation := processBuilder.Build()
 
 	// Create the new process

@@ -22,7 +22,6 @@ const (
 	timeoutOpt                 = "t"
 	versionRuleOpt             = "version-rule"
 	noStartOpt                 = "no-start"
-	namespaceOpt               = "namespace"
 	useNamespacesOpt           = "use-namespaces"
 	noNamespacesForServicesOpt = "no-namespaces-for-services"
 	deleteServiceKeysOpt       = "delete-service-keys"
@@ -81,7 +80,7 @@ func (c *DeployCommand) GetPluginCommand() plugin.Command {
 		HelpText: "Deploy a new multi-target app or sync changes to an existing one",
 		UsageDetails: plugin.Usage{
 			Usage: `Deploy a multi-target app archive
-   cf deploy MTA [-e EXT_DESCRIPTOR[,...]] [-t TIMEOUT] [--version-rule VERSION_RULE] [-u URL] [-f] [--retries RETRIES] [--no-start] [--use-namespaces] [--no-namespaces-for-services] [--delete-services] [--delete-service-keys] [--delete-service-brokers] [--keep-files] [--no-restart-subscribed-apps] [--do-not-fail-on-missing-permissions] [--abort-on-error] [--skip-ownership-validation] [--verify-archive-signature]
+   cf deploy MTA [-e EXT_DESCRIPTOR[,...]] [-t TIMEOUT] [--version-rule VERSION_RULE] [-u URL] [-f] [--retries RETRIES] [--no-start] [--namespace NAMESPACE] [--no-namespaces-for-services] [--delete-services] [--delete-service-keys] [--delete-service-brokers] [--keep-files] [--no-restart-subscribed-apps] [--do-not-fail-on-missing-permissions] [--abort-on-error] [--skip-ownership-validation] [--verify-archive-signature]
 
    Perform action on an active deploy operation
    cf deploy -i OPERATION_ID -a ACTION [-u URL]`,
@@ -97,7 +96,7 @@ func (c *DeployCommand) GetPluginCommand() plugin.Command {
 				resourceOpt:                           "Deploy list of resources which are contained in the deployment descriptor, in the current location",
 				namespaceOpt:                          "Namespace for the mta, applied to app and service names as well",
 				util.GetShortOption(noStartOpt):       "Do not start apps",
-				util.GetShortOption(useNamespacesOpt): "Use namespaces in app and service names",
+				// util.GetShortOption(useNamespacesOpt): "Use namespaces in app and service names",
 				util.GetShortOption(noNamespacesForServicesOpt):    "Do not use namespaces in service names",
 				util.GetShortOption(deleteServicesOpt):             "Recreate changed services / delete discontinued services",
 				util.GetShortOption(deleteServiceKeysOpt):          "Delete existing service keys and apply the new ones",
@@ -276,7 +275,7 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 	ui.Say("Command line value for namespace: %s\n Extension descriptor value for namespace: %s\n Descriptor value for namespace: %s", terminal.EntityNameColor(namespace), "", terminal.EntityNameColor(descriptor.Namespace))
 
 	// Check for an ongoing operation for this MTA ID and abort it
-	wasAborted, err := c.CheckOngoingOperation(descriptor.ID, host, force)
+	wasAborted, err := c.CheckOngoingOperation(descriptor.ID, namespace, host, force)
 	if err != nil {
 		ui.Failed("Could not get MTA operations: %s", baseclient.NewClientError(err))
 		return Failure
@@ -321,6 +320,7 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 	processBuilder.ProcessType(c.processTypeProvider.GetProcessType())
 	processBuilder.Parameter("appArchiveId", strings.Join(uploadedArchivePartIds, ","))
 	processBuilder.Parameter("mtaExtDescriptorId", strings.Join(uploadedExtDescriptorIDs, ","))
+	processBuilder.Parameter("namespace", namespace)
 	setModulesAndResourcesListParameters(modulesList, resourcesList, processBuilder, mtaElementsCalculator)
 	c.processParametersSetter(optionValues, processBuilder)
 	operation := processBuilder.Build()
