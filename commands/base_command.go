@@ -340,6 +340,7 @@ func (c *BaseCommand) isConflicting(operation *models.Operation, mtaID string, n
 	if err != nil {
 		return false, err
 	}
+	// TODO make null namespace check here
 	return operation.MtaID == mtaID && operation.SpaceID == space.Guid && operation.Namespace == namespace && operation.AcquiredLock, nil
 }
 

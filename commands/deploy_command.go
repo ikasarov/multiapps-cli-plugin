@@ -18,12 +18,12 @@ import (
 )
 
 const (
-	extDescriptorsOpt          = "e"
-	timeoutOpt                 = "t"
-	versionRuleOpt             = "version-rule"
-	noStartOpt                 = "no-start"
-	useNamespacesOpt           = "use-namespaces"
-	noNamespacesForServicesOpt = "no-namespaces-for-services"
+	extDescriptorsOpt = "e"
+	timeoutOpt        = "t"
+	versionRuleOpt    = "version-rule"
+	noStartOpt        = "no-start"
+	//useNamespacesOpt           = "use-namespaces"
+	//noNamespacesForServicesOpt = "no-namespaces-for-services"
 	deleteServiceKeysOpt       = "delete-service-keys"
 	keepFilesOpt               = "keep-files"
 	skipOwnershipValidationOpt = "skip-ownership-validation"
@@ -85,19 +85,19 @@ func (c *DeployCommand) GetPluginCommand() plugin.Command {
    Perform action on an active deploy operation
    cf deploy -i OPERATION_ID -a ACTION [-u URL]`,
 			Options: map[string]string{
-				extDescriptorsOpt:                     "Extension descriptors",
-				deployServiceURLOpt:                   "Deploy service URL, by default 'deploy-service.<system-domain>'",
-				timeoutOpt:                            "Start timeout in seconds",
-				versionRuleOpt:                        "Version rule (HIGHER, SAME_HIGHER, ALL)",
-				operationIDOpt:                        "Active deploy operation id",
-				actionOpt:                             "Action to perform on active deploy operation (abort, retry, monitor)",
-				forceOpt:                              "Force deploy without confirmation for aborting conflicting processes",
-				moduleOpt:                             "Deploy list of modules which are contained in the deployment descriptor, in the current location",
-				resourceOpt:                           "Deploy list of resources which are contained in the deployment descriptor, in the current location",
-				namespaceOpt:                          "Namespace for the mta, applied to app and service names as well",
-				util.GetShortOption(noStartOpt):       "Do not start apps",
+				extDescriptorsOpt:               "Extension descriptors",
+				deployServiceURLOpt:             "Deploy service URL, by default 'deploy-service.<system-domain>'",
+				timeoutOpt:                      "Start timeout in seconds",
+				versionRuleOpt:                  "Version rule (HIGHER, SAME_HIGHER, ALL)",
+				operationIDOpt:                  "Active deploy operation id",
+				actionOpt:                       "Action to perform on active deploy operation (abort, retry, monitor)",
+				forceOpt:                        "Force deploy without confirmation for aborting conflicting processes",
+				moduleOpt:                       "Deploy list of modules which are contained in the deployment descriptor, in the current location",
+				resourceOpt:                     "Deploy list of resources which are contained in the deployment descriptor, in the current location",
+				namespaceOpt:                    "Namespace for the mta, applied to app and service names as well",
+				util.GetShortOption(noStartOpt): "Do not start apps",
 				// util.GetShortOption(useNamespacesOpt): "Use namespaces in app and service names",
-				util.GetShortOption(noNamespacesForServicesOpt):    "Do not use namespaces in service names",
+				// util.GetShortOption(noNamespacesForServicesOpt):    "Do not use namespaces in service names",
 				util.GetShortOption(deleteServicesOpt):             "Recreate changed services / delete discontinued services",
 				util.GetShortOption(deleteServiceKeysOpt):          "Delete existing service keys and apply the new ones",
 				util.GetShortOption(deleteServiceBrokersOpt):       "Delete discontinued service brokers",
@@ -132,8 +132,8 @@ func deployCommandFlagsDefiner() CommandFlagsDefiner {
 		optionValues[deleteServicesOpt] = flags.Bool(deleteServicesOpt, false, "")
 		optionValues[noStartOpt] = flags.Bool(noStartOpt, false, "")
 		optionValues[namespaceOpt] = flags.String(namespaceOpt, "", "")
-		optionValues[useNamespacesOpt] = flags.Bool(useNamespacesOpt, false, "")
-		optionValues[noNamespacesForServicesOpt] = flags.Bool(noNamespacesForServicesOpt, false, "")
+		//optionValues[useNamespacesOpt] = flags.Bool(useNamespacesOpt, false, "")
+		//optionValues[noNamespacesForServicesOpt] = flags.Bool(noNamespacesForServicesOpt, false, "")
 		optionValues[deleteServiceKeysOpt] = flags.Bool(deleteServiceKeysOpt, false, "")
 		optionValues[deleteServiceBrokersOpt] = flags.Bool(deleteServiceBrokersOpt, false, "")
 		optionValues[keepFilesOpt] = flags.Bool(keepFilesOpt, false, "")
@@ -157,9 +157,9 @@ func deployProcessParametersSetter() ProcessParametersSetter {
 		processBuilder.Parameter("deleteServiceKeys", strconv.FormatBool(GetBoolOpt(deleteServiceKeysOpt, optionValues)))
 		processBuilder.Parameter("deleteServices", strconv.FormatBool(GetBoolOpt(deleteServicesOpt, optionValues)))
 		processBuilder.Parameter("noStart", strconv.FormatBool(GetBoolOpt(noStartOpt, optionValues)))
-		processBuilder.Parameter("namespace", GetStringOpt(namespaceOpt, optionValues))
-		processBuilder.Parameter("useNamespaces", strconv.FormatBool(GetBoolOpt(useNamespacesOpt, optionValues)))
-		processBuilder.Parameter("useNamespacesForServices", strconv.FormatBool(!GetBoolOpt(noNamespacesForServicesOpt, optionValues)))
+		// processBuilder.Parameter("namespace", GetStringOpt(namespaceOpt, optionValues))
+		//processBuilder.Parameter("useNamespaces", strconv.FormatBool(GetBoolOpt(useNamespacesOpt, optionValues)))
+		//processBuilder.Parameter("useNamespacesForServices", strconv.FormatBool(!GetBoolOpt(noNamespacesForServicesOpt, optionValues)))
 		processBuilder.Parameter("deleteServiceBrokers", strconv.FormatBool(GetBoolOpt(deleteServiceBrokersOpt, optionValues)))
 		processBuilder.Parameter("startTimeout", GetStringOpt(timeoutOpt, optionValues))
 		processBuilder.Parameter("versionRule", GetStringOpt(versionRuleOpt, optionValues))
@@ -272,7 +272,7 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 	}
 
-	ui.Say("Command line value for namespace: %s\n Extension descriptor value for namespace: %s\n Descriptor value for namespace: %s", terminal.EntityNameColor(namespace), "", terminal.EntityNameColor(descriptor.Namespace))
+	ui.Say("Command line value for namespace: %s\n", terminal.EntityNameColor(namespace))
 
 	// Check for an ongoing operation for this MTA ID and abort it
 	wasAborted, err := c.CheckOngoingOperation(descriptor.ID, namespace, host, force)
@@ -318,9 +318,9 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 	// Build the process instance
 	processBuilder := util.NewProcessBuilder()
 	processBuilder.ProcessType(c.processTypeProvider.GetProcessType())
+	processBuilder.Namespace(namespace)
 	processBuilder.Parameter("appArchiveId", strings.Join(uploadedArchivePartIds, ","))
 	processBuilder.Parameter("mtaExtDescriptorId", strings.Join(uploadedExtDescriptorIDs, ","))
-	processBuilder.Parameter("namespace", namespace)
 	setModulesAndResourcesListParameters(modulesList, resourcesList, processBuilder, mtaElementsCalculator)
 	c.processParametersSetter(optionValues, processBuilder)
 	operation := processBuilder.Build()
