@@ -156,7 +156,12 @@ func (c *BaseCommand) NewManagementMtaClient(host string) (mtaclient.MtaClientOp
 
 // NewMtaV2Client creates a new MTAV2 deployer REST client
 func (c *BaseCommand) NewMtaV2Client(host string) (mtaclient_v2.MtaV2ClientOperations, error) {
-	return c.clientFactory.NewMtaV2Client(host, c.transport, c.jar, c.tokenFactory), nil
+	space, err := c.GetSpace()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.clientFactory.NewMtaV2Client(host, space.Guid, c.transport, c.jar, c.tokenFactory), nil
 }
 
 // Context holding the username, Org and Space of the current used

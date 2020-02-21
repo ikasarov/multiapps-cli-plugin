@@ -27,9 +27,10 @@ func (c *MtaCommand) GetPluginCommand() plugin.Command {
 		Name:     "mta",
 		HelpText: "Display health and status for a multi-target app",
 		UsageDetails: plugin.Usage{
-			Usage: "cf mta MTA_ID [-u URL]",
+			Usage: "cf mta MTA_ID [--namespace NAMESPACE] [-u URL]",
 			Options: map[string]string{
-				"u": "Deploy service URL, by default 'deploy-service.<system-domain>'",
+				util.GetShortOption(namespaceOpt): "namespace of the requested mta, empty by default",
+				"u":                               "Deploy service URL, by default 'deploy-service.<system-domain>'",
 			},
 		},
 	}
@@ -48,6 +49,9 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 	}
 
+	var namespace string
+	flags.StringVar(&namespace, namespaceOpt, "", "")
+	// namespace := *flags.String(namespaceOpt, "", "")
 	parser := NewCommandFlagsParser(flags, NewDefaultCommandFlagsParser([]string{"MTA_ID"}), NewDefaultCommandFlagsValidator(map[string]bool{}))
 	err = parser.Parse(args)
 	if err != nil {
@@ -55,6 +59,7 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 	}
 	mtaID := args[0]
+	ui.Say("Command line value for namespace: %s\n", terminal.EntityNameColor(namespace))
 
 	context, err := c.GetContext()
 	if err != nil {
@@ -68,14 +73,14 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 		terminal.EntityNameColor(context.Space), terminal.EntityNameColor(context.Username))
 
 	// Create new REST client
-	mtaClient, err := c.NewMtaClient(host)
+	mtaClient, err := c.NewMtaV2Client(host)
 	if err != nil {
 		ui.Failed("Could not get space id: %s", baseclient.NewClientError(err))
 		return Failure
 	}
 
 	// Get the MTA
-	mta, err := mtaClient.GetMta(mtaID)
+	mtas, err := mtaClient.GetMtasForThisSpace(mtaID, namespace)
 	if err != nil {
 		ce, ok := err.(*baseclient.ClientError)
 		if ok && ce.Code == 404 && strings.Contains(fmt.Sprint(ce.Description), mtaID) {
@@ -86,6 +91,11 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 
 	}
+	if len(mtas) != 1 {
+		ui.Failed("Multiple multi-target apps exist for name %s, please enter namespace", terminal.EntityNameColor(mtaID))
+		return Failure
+	}
+	mta := mtas[0]
 	ui.Ok()
 
 	// Display information about all apps and services

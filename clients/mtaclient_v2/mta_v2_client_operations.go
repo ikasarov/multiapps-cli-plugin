@@ -5,9 +5,10 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 )
 
-// MtaClientOperations drun drun drun
+// MtaClientOperations drun drun drun x2
 type MtaV2ClientOperations interface {
 	GetMtas(name, namespace, spaceGuid string) ([]*models.Mta, error)
+	GetMtasForThisSpace(name, namespace string) ([]*models.Mta, error)
 }
 
 // ResponseHeader response header

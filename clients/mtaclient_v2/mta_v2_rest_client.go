@@ -15,13 +15,14 @@ const restBaseURL string = ""
 
 type MtaV2RestClient struct {
 	baseclient.BaseClient
-	client *HTTPMtaV2
+	client    *HTTPMtaV2
+	spaceGUID string
 }
 
-func NewMtaClient(host string, rt http.RoundTripper, jar http.CookieJar, tokenFactory baseclient.TokenFactory) MtaV2ClientOperations {
+func NewMtaClient(host string, spaceGUID string, rt http.RoundTripper, jar http.CookieJar, tokenFactory baseclient.TokenFactory) MtaV2ClientOperations {
 	t := baseclient.NewHTTPTransport(host, restBaseURL, restBaseURL, rt, jar)
 	httpMtaV2Client := New(t, strfmt.Default)
-	return &MtaV2RestClient{baseclient.BaseClient{TokenFactory: tokenFactory}, httpMtaV2Client}
+	return &MtaV2RestClient{baseclient.BaseClient{TokenFactory: tokenFactory}, httpMtaV2Client, spaceGUID}
 }
 
 func (c MtaV2RestClient) GetMtas(name, namespace, spaceGuid string) ([]*models.Mta, error) {
@@ -40,6 +41,10 @@ func (c MtaV2RestClient) GetMtas(name, namespace, spaceGuid string) ([]*models.M
 		return nil, baseclient.NewClientError(err)
 	}
 	return resp.Payload, nil
+}
+
+func (c MtaV2RestClient) GetMtasForThisSpace(name, namespace string) ([]*models.Mta, error) {
+	return c.GetMtas(name, namespace, c.spaceGUID)
 }
 
 func executeRestOperation(tokenProvider baseclient.TokenFactory, restOperation func(token runtime.ClientAuthInfoWriter) (interface{}, error)) (interface{}, error) {
