@@ -10,56 +10,67 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // Log log
 // swagger:model Log
-
 type Log struct {
 
 	// content
-	Content strfmt.URI `json:"content,omitempty"`
+	// Read Only: true
+	Content string `json:"content,omitempty"`
 
 	// description
+	// Read Only: true
 	Description string `json:"description,omitempty"`
 
 	// display name
+	// Read Only: true
 	DisplayName string `json:"displayName,omitempty"`
 
 	// external info
-	ExternalInfo strfmt.URI `json:"externalInfo,omitempty"`
+	// Read Only: true
+	ExternalInfo string `json:"externalInfo,omitempty"`
 
 	// id
+	// Read Only: true
 	ID string `json:"id,omitempty"`
 
 	// last modified
+	// Read Only: true
+	// Format: date-time
 	LastModified strfmt.DateTime `json:"lastModified,omitempty"`
 
 	// size
+	// Read Only: true
 	Size int64 `json:"size,omitempty"`
 }
-
-/* polymorph Log content false */
-
-/* polymorph Log description false */
-
-/* polymorph Log displayName false */
-
-/* polymorph Log externalInfo false */
-
-/* polymorph Log id false */
-
-/* polymorph Log lastModified false */
-
-/* polymorph Log size false */
 
 // Validate validates this log
 func (m *Log) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateLastModified(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Log) validateLastModified(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.LastModified) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("lastModified", "body", "date-time", m.LastModified.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

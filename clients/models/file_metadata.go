@@ -8,53 +8,40 @@ package models
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // FileMetadata file metadata
 // swagger:model FileMetadata
-
 type FileMetadata struct {
 
 	// digest
+	// Read Only: true
 	Digest string `json:"digest,omitempty"`
 
 	// digest algorithm
+	// Read Only: true
 	DigestAlgorithm string `json:"digestAlgorithm,omitempty"`
 
 	// id
+	// Read Only: true
 	ID string `json:"id,omitempty"`
 
 	// name
+	// Read Only: true
 	Name string `json:"name,omitempty"`
 
 	// size
-	Size float64 `json:"size,omitempty"`
+	// Read Only: true
+	Size int64 `json:"size,omitempty"`
 
 	// space
+	// Read Only: true
 	Space string `json:"space,omitempty"`
 }
 
-/* polymorph FileMetadata digest false */
-
-/* polymorph FileMetadata digestAlgorithm false */
-
-/* polymorph FileMetadata id false */
-
-/* polymorph FileMetadata name false */
-
-/* polymorph FileMetadata size false */
-
-/* polymorph FileMetadata space false */
-
 // Validate validates this file metadata
 func (m *FileMetadata) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

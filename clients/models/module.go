@@ -14,96 +14,45 @@ import (
 
 // Module module
 // swagger:model Module
-
 type Module struct {
 
 	// app name
+	// Read Only: true
 	AppName string `json:"appName,omitempty"`
 
 	// created on
-	CreatedOn strfmt.Date `json:"createdOn,omitempty"`
+	// Read Only: true
+	// Format: date-time
+	CreatedOn strfmt.DateTime `json:"createdOn,omitempty"`
 
 	// module name
+	// Read Only: true
 	ModuleName string `json:"moduleName,omitempty"`
 
 	// provided dendency names
+	// Read Only: true
 	ProvidedDendencyNames []string `json:"providedDendencyNames"`
 
 	// services
+	// Read Only: true
 	Services []string `json:"services"`
 
 	// updated on
-	UpdatedOn strfmt.Date `json:"updatedOn,omitempty"`
+	// Read Only: true
+	// Format: date-time
+	UpdatedOn strfmt.DateTime `json:"updatedOn,omitempty"`
 
 	// uris
+	// Read Only: true
 	Uris []string `json:"uris"`
 }
 
-/* polymorph Module appName false */
-
-/* polymorph Module createdOn false */
-
-/* polymorph Module moduleName false */
-
-/* polymorph Module providedDendencyNames false */
-
-/* polymorph Module services false */
-
-/* polymorph Module updatedOn false */
-
-/* polymorph Module uris false */
-
 // Validate validates this module
 func (m *Module) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateProvidedDendencyNames(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateServices(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if err := m.validateUris(formats); err != nil {
-		// prop
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *Module) validateProvidedDendencyNames(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.ProvidedDendencyNames) { // not required
-		return nil
-	}
 
 	return nil
 }
 
-func (m *Module) validateServices(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Services) { // not required
-		return nil
-	}
-
-	return nil
-}
-
-func (m *Module) validateUris(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Uris) { // not required
-		return nil
-	}
-
-	return nil
-}
 
 // MarshalBinary interface implementation
 func (m *Module) MarshalBinary() ([]byte, error) {

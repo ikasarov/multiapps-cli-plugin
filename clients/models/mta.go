@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"strconv"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -15,37 +17,35 @@ import (
 
 // Mta mta
 // swagger:model Mta
-
 type Mta struct {
 
 	// metadata
+	// Read Only: true
 	Metadata *Metadata `json:"metadata,omitempty"`
 
 	// modules
-	Modules MtaModules `json:"modules"`
+	// Read Only: true
+	Modules []*Module `json:"modules"`
 
 	// services
+	// Read Only: true
 	// Unique: true
 	Services []string `json:"services"`
 }
-
-/* polymorph Mta metadata false */
-
-/* polymorph Mta modules false */
-
-/* polymorph Mta services false */
 
 // Validate validates this mta
 func (m *Mta) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateMetadata(formats); err != nil {
-		// prop
+		res = append(res, err)
+	}
+
+	if err := m.validateModules(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateServices(formats); err != nil {
-		// prop
 		res = append(res, err)
 	}
 
@@ -62,13 +62,37 @@ func (m *Mta) validateMetadata(formats strfmt.Registry) error {
 	}
 
 	if m.Metadata != nil {
-
 		if err := m.Metadata.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("metadata")
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Mta) validateModules(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Modules) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Modules); i++ {
+		if swag.IsZero(m.Modules[i]) { // not required
+			continue
+		}
+
+		if m.Modules[i] != nil {
+			if err := m.Modules[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("modules" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

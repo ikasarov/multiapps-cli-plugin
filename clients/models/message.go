@@ -14,24 +14,19 @@ import (
 
 // Message message
 // swagger:model Message
-
 type Message struct {
 
 	// id
+	// Read Only: true
 	ID int64 `json:"id,omitempty"`
 
 	// text
+	// Read Only: true
 	Text string `json:"text,omitempty"`
 
 	// type
 	Type MessageType `json:"type,omitempty"`
 }
-
-/* polymorph Message id false */
-
-/* polymorph Message text false */
-
-/* polymorph Message type false */
 
 // Validate validates this message
 func (m *Message) Validate(formats strfmt.Registry) error {

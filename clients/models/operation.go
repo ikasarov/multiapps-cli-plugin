@@ -6,24 +6,39 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
+	"strconv"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // Operation operation
 // swagger:model Operation
-
 type Operation struct {
 
 	// acquired lock
-	AcquiredLock bool `json:"acquiredLock,omitempty"`
+	// Read Only: true
+	AcquiredLock *bool `json:"acquiredLock,omitempty"`
+
+	// ended at
+	// Read Only: true
+	// Format: date-time
+	EndedAt strfmt.DateTime `json:"endedAt,omitempty"`
+
+	// error type
+	// Read Only: true
+	ErrorType ErrorType `json:"errorType,omitempty"`
 
 	// messages
-	Messages OperationMessages `json:"messages,omitempty"`
+	// Read Only: true
+	Messages []*Message `json:"messages"`
 
 	// mta Id
+	// Read Only: true
 	MtaID string `json:"mtaId,omitempty"`
 
 	// namespace
@@ -31,58 +46,40 @@ type Operation struct {
 	Namespace string `json:"namespace,omitempty"`
 
 	// parameters
+	// Read Only: true
 	Parameters map[string]interface{} `json:"parameters,omitempty"`
 
 	// process Id
+	// Read Only: true
 	ProcessID string `json:"processId,omitempty"`
 
 	// process type
-	ProcessType string `json:"processType,omitempty"`
+	// Read Only: true
+	ProcessType *ProcessType `json:"processType,omitempty"`
 
 	// space Id
+	// Read Only: true
 	SpaceID string `json:"spaceId,omitempty"`
 
 	// started at
-	StartedAt string `json:"startedAt,omitempty"`
+	// Read Only: true
+	// Format: date-time
+	StartedAt strfmt.DateTime `json:"startedAt,omitempty"`
 
 	// state
+	// Read Only: true
 	State State `json:"state,omitempty"`
 
-	// error type
-	ErrorType ErrorType `json:"errorType,omitempty"`
-
 	// user
+	// Read Only: true
 	User string `json:"user,omitempty"`
 }
-
-/* polymorph Operation acquiredLock false */
-
-/* polymorph Operation messages false */
-
-/* polymorph Operation mtaId false */
-
-/* polymorph Operation parameters false */
-
-/* polymorph Operation processId false */
-
-/* polymorph Operation processType false */
-
-/* polymorph Operation spaceId false */
-
-/* polymorph Operation startedAt false */
-
-/* polymorph Operation state false */
-
-/* polymorph Operation errorType false */
-
-/* polymorph Operation user false */
 
 // Validate validates this operation
 func (m *Operation) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateState(formats); err != nil {
-		// prop
+	if err := m.validateEndedAt(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -90,9 +87,112 @@ func (m *Operation) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateMessages(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateProcessType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStartedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateState(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Operation) validateEndedAt(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.EndedAt) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("endedAt", "body", "date-time", m.EndedAt.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Operation) validateErrorType(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.ErrorType) {
+
+		return nil
+	}
+
+	if err := m.ErrorType.Validate(formats); err != nil {
+
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("errorType")
+		}
+		return nil
+
+	}
+	return nil
+}
+
+func (m *Operation) validateMessages(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Messages) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Messages); i++ {
+		if swag.IsZero(m.Messages[i]) { // not required
+			continue
+		}
+
+		if m.Messages[i] != nil {
+			if err := m.Messages[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("messages" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Operation) validateProcessType(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.ProcessType) { // not required
+		return nil
+	}
+
+	if m.ProcessType != nil {
+		if err := m.ProcessType.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("processType")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Operation) validateStartedAt(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.StartedAt) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("startedAt", "body", "date-time", m.StartedAt.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -109,20 +209,6 @@ func (m *Operation) validateState(formats strfmt.Registry) error {
 		return err
 	}
 
-	return nil
-}
-
-func (m *Operation) validateErrorType(formats strfmt.Registry) error {
-	if swag.IsZero(m.ErrorType) {
-		return nil
-	}
-
-	if err := m.ErrorType.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("errorType")
-		}
-		return nil
-	}
 	return nil
 }
 

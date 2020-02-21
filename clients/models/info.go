@@ -8,28 +8,20 @@ package models
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
 )
 
 // Info info
 // swagger:model Info
-
 type Info struct {
 
 	// api version
-	APIVersion int64 `json:"api_version,omitempty"`
+	// Read Only: true
+	APIVersion int32 `json:"api_version,omitempty"`
 }
-
-/* polymorph Info api_version false */
 
 // Validate validates this info
 func (m *Info) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 

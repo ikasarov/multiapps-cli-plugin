@@ -30,7 +30,7 @@ client_name="mtaclient"
 
 if [ $# -eq 0 ];
 then
-    echo "No arguments supplied, you can input swagger directory and name of yaml to read from"
+    echo "No arguments supplied, generating in dirs ${tmp} and ${tmp}-v2"
 elif [ "$1" ]; then
 	tmp="$1"
 fi

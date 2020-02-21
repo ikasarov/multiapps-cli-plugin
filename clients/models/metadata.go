@@ -13,10 +13,10 @@ import (
 
 // Metadata metadata
 // swagger:model Metadata
-
 type Metadata struct {
 
 	// id
+	// Read Only: true
 	ID string `json:"id,omitempty"`
 
 	// namespace
@@ -24,12 +24,9 @@ type Metadata struct {
 	Namespace string `json:"namespace,omitempty"`
 
 	// version
+	// Read Only: true
 	Version string `json:"version,omitempty"`
 }
-
-/* polymorph Metadata id false */
-
-/* polymorph Metadata version false */
 
 // Validate validates this metadata
 func (m *Metadata) Validate(formats strfmt.Registry) error {
