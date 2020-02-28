@@ -7,8 +7,8 @@ import (
 
 // MtaClientOperations drun drun drun x2
 type MtaV2ClientOperations interface {
-	GetMtas(name, namespace, spaceGuid string) ([]*models.Mta, error)
-	GetMtasForThisSpace(name, namespace string) ([]*models.Mta, error)
+	GetMtas(name, namespace *string, spaceGuid string) ([]*models.Mta, error)
+	GetMtasForThisSpace(name, namespace *string) ([]*models.Mta, error)
 }
 
 // ResponseHeader response header

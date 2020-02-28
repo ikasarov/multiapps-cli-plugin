@@ -19,7 +19,7 @@ func NewRetryableMtaRestClient(host string, spaceGUID string, rt http.RoundTripp
 	return RetryableMtaRestClient{mtaClient: mtaClient, MaxRetriesCount: 3, RetryInterval: time.Second * 3}
 }
 
-func (c RetryableMtaRestClient) GetMtas(name, namespace, spaceGuid string) ([]*models.Mta, error) {
+func (c RetryableMtaRestClient) GetMtas(name, namespace *string, spaceGuid string) ([]*models.Mta, error) {
 	getMtasCb := func() (interface{}, error) {
 		return c.mtaClient.GetMtas(name, namespace, spaceGuid)
 	}
@@ -30,7 +30,7 @@ func (c RetryableMtaRestClient) GetMtas(name, namespace, spaceGuid string) ([]*m
 	return resp.([]*models.Mta), nil
 }
 
-func (c RetryableMtaRestClient) GetMtasForThisSpace(name, namespace string) ([]*models.Mta, error) {
+func (c RetryableMtaRestClient) GetMtasForThisSpace(name, namespace *string) ([]*models.Mta, error) {
 	getMtasCb := func() (interface{}, error) {
 		return c.mtaClient.GetMtasForThisSpace(name, namespace)
 	}

@@ -73,14 +73,14 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 		terminal.EntityNameColor(context.Space), terminal.EntityNameColor(context.Username))
 
 	// Create new REST client
-	mtaClient, err := c.NewMtaV2Client(host)
+	mtaV2Client, err := c.NewMtaV2Client(host)
 	if err != nil {
 		ui.Failed("Could not get space id: %s", baseclient.NewClientError(err))
 		return Failure
 	}
 
 	// Get the MTA
-	mtas, err := mtaClient.GetMtasForThisSpace(mtaID, namespace)
+	mtas, err := mtaV2Client.GetMtasForThisSpace(&mtaID, &namespace)
 	if err != nil {
 		ce, ok := err.(*baseclient.ClientError)
 		if ok && ce.Code == 404 && strings.Contains(fmt.Sprint(ce.Description), mtaID) {

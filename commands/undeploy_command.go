@@ -121,8 +121,15 @@ func (c *UndeployCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 	}
 
+	// Create new REST client for mtas V2 api
+	mtaV2Client, err := c.NewMtaV2Client(host)
+	if err != nil {
+		ui.Failed(err.Error())
+		return Failure
+	}
+
 	// Check if a deployed MTA with the specified ID exists
-	_, err = mtaClient.GetMta(mtaID)
+	_, err = mtaV2Client.GetMtasForThisSpace(&mtaID, &namespace)
 	if err != nil {
 		ce, ok := err.(*baseclient.ClientError)
 		if ok && ce.Code == 404 && strings.Contains(fmt.Sprint(ce.Description), mtaID) {

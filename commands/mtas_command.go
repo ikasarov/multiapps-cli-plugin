@@ -58,14 +58,14 @@ func (c *MtasCommand) Execute(args []string) ExecutionStatus {
 		terminal.EntityNameColor(context.Org), terminal.EntityNameColor(context.Space), terminal.EntityNameColor(context.Username))
 
 	// Create new REST client
-	mtaClient, err := c.NewMtaClient(host)
+	mtaV2Client, err := c.NewMtaV2Client(host)
 	if err != nil {
 		ui.Failed("Could not get space id: %s", baseclient.NewClientError(err))
 		return Failure
 	}
 
 	// Get all deployed components
-	mtas, err := mtaClient.GetMtas()
+	mtas, err := mtaV2Client.GetMtasForThisSpace(nil, nil)
 	if err != nil {
 		ui.Failed("Could not get deployed components: %s", baseclient.NewClientError(err))
 		return Failure

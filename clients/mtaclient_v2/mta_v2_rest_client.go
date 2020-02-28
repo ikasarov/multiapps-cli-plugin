@@ -25,11 +25,11 @@ func NewMtaClient(host string, spaceGUID string, rt http.RoundTripper, jar http.
 	return &MtaV2RestClient{baseclient.BaseClient{TokenFactory: tokenFactory}, httpMtaV2Client, spaceGUID}
 }
 
-func (c MtaV2RestClient) GetMtas(name, namespace, spaceGuid string) ([]*models.Mta, error) {
+func (c MtaV2RestClient) GetMtas(name, namespace *string, spaceGuid string) ([]*models.Mta, error) {
 	params := &operations.GetMtasV2Params{
 		Context:   context.TODO(),
-		Name:      &name,
-		Namespace: &namespace,
+		Name:      name,
+		Namespace: namespace,
 		SpaceGUID: spaceGuid,
 	}
 	token, err := c.TokenFactory.NewToken()
@@ -43,7 +43,7 @@ func (c MtaV2RestClient) GetMtas(name, namespace, spaceGuid string) ([]*models.M
 	return resp.Payload, nil
 }
 
-func (c MtaV2RestClient) GetMtasForThisSpace(name, namespace string) ([]*models.Mta, error) {
+func (c MtaV2RestClient) GetMtasForThisSpace(name, namespace *string) ([]*models.Mta, error) {
 	return c.GetMtas(name, namespace, c.spaceGUID)
 }
 
