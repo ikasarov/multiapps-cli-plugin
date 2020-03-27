@@ -34,11 +34,11 @@ func NewFileUploader(files []string, mtaClient mtaclient.MtaClientOperations) *F
 }
 
 //UploadFiles uploads the files
-func (f *FileUploader) UploadFiles() ([]*models.FileMetadata, ExecutionStatus) {
+func (f *FileUploader) UploadFiles(namespace *string) ([]*models.FileMetadata, ExecutionStatus) {
 	log.Tracef("Uploading files '%v'\n", f.files)
 
 	// Get all files that are already uploaded
-	uploadedMtaFiles, err := f.mtaClient.GetMtaFiles()
+	uploadedMtaFiles, err := f.mtaClient.GetMtaFiles(namespace)
 	if err != nil {
 		ui.Failed("Could not get mta files: %s", baseclient.NewClientError(err))
 		return nil, Failure
@@ -89,7 +89,7 @@ func (f *FileUploader) UploadFiles() ([]*models.FileMetadata, ExecutionStatus) {
 			ui.Say("  " + fullPath)
 
 			// Upload the file
-			uploaded, err := uploadInChunks(fullPath, fileToUpload, chunkSizeInMB, f.mtaClient)
+			uploaded, err := uploadInChunks(fullPath, fileToUpload, chunkSizeInMB, f.mtaClient, namespace)
 			if err != nil {
 				ui.Failed("Could not upload file %s: %s", terminal.EntityNameColor(fileToUpload.Name()), err.Error())
 				return nil, Failure
@@ -101,7 +101,7 @@ func (f *FileUploader) UploadFiles() ([]*models.FileMetadata, ExecutionStatus) {
 	return uploadedFiles, Success
 }
 
-func uploadInChunks(fullPath string, fileToUpload os.File, chunkSizeInMB uint64, mtaClient mtaclient.MtaClientOperations) ([]*models.FileMetadata, error) {
+func uploadInChunks(fullPath string, fileToUpload os.File, chunkSizeInMB uint64, mtaClient mtaclient.MtaClientOperations, namespace *string) ([]*models.FileMetadata, error) {
 	// Upload the file
 	err := util.ValidateChunkSize(fullPath, chunkSizeInMB)
 	if err != nil {
@@ -122,7 +122,7 @@ func uploadInChunks(fullPath string, fileToUpload os.File, chunkSizeInMB uint64,
 			return nil, fmt.Errorf("Could not open file part %s of file %s", filePart.Name(), fullPath)
 		}
 		uploaderGroup.Go(func() error {
-			file, err := uploadFilePart(filePart, fileToUpload.Name(), mtaClient)
+			file, err := uploadFilePart(filePart, fileToUpload.Name(), mtaClient, namespace)
 			if err != nil {
 				return err
 			}
@@ -170,8 +170,8 @@ func attemptToRemoveFileParts(fileParts []string) {
 	}
 }
 
-func uploadFilePart(filePart *os.File, baseFileName string, client mtaclient.MtaClientOperations) (*models.FileMetadata, error) {
-	uploadedFile, err := client.UploadMtaFile(*filePart)
+func uploadFilePart(filePart *os.File, baseFileName string, client mtaclient.MtaClientOperations, namespace *string) (*models.FileMetadata, error) {
+	uploadedFile, err := client.UploadMtaFile(*filePart, namespace)
 	defer filePart.Close()
 	if err != nil {
 		return nil, fmt.Errorf("Could not create file %s: %s", terminal.EntityNameColor(baseFileName), baseclient.NewClientError(err))

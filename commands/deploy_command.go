@@ -186,6 +186,11 @@ func GetStringOpt(name string, optionValues map[string]interface{}) string {
 	return *optionValues[name].(*string)
 }
 
+// GetNullableStringOpt gets the pointer identified by the specified name.
+func GetNullableStringOpt(name string, optionValues map[string]interface{}) *string {
+	return optionValues[name].(*string)
+}
+
 // GetUintOpt gets and dereferences the pointer identified by the specified name.
 func GetUintOpt(name string, optionValues map[string]interface{}) uint {
 	return *optionValues[name].(*uint)
@@ -293,7 +298,7 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 
 	// Upload the MTA archive file
 	mtaArchiveUploader := NewFileUploader([]string{mtaArchivePath}, mtaClient)
-	uploadedMtaArchives, status := mtaArchiveUploader.UploadFiles()
+	uploadedMtaArchives, status := mtaArchiveUploader.UploadFiles(&namespace)
 	if status == Failure {
 		return Failure
 	}
@@ -306,7 +311,7 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 	var uploadedExtDescriptorIDs []string
 	if len(extDescriptorPaths) != 0 {
 		extDescriptorsUploader := NewFileUploader(extDescriptorPaths, mtaClient)
-		uploadedExtDescriptors, status := extDescriptorsUploader.UploadFiles()
+		uploadedExtDescriptors, status := extDescriptorsUploader.UploadFiles(&namespace)
 		if status == Failure {
 			return Failure
 		}
