@@ -100,6 +100,7 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 
 	// Display information about all apps and services
 	ui.Say("Version: %s", util.GetMtaVersionAsString(mta))
+	ui.Say("Namespace: %s", mta.Metadata.Namespace)
 	ui.Say("\nApps:")
 	table := ui.Table([]string{"name", "requested state", "instances", "memory", "disk", "urls"})
 	// GetApps() is more safe than GetApp(), because it retrieves all application statistics through a single call,

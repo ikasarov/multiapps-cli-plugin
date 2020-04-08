@@ -180,10 +180,8 @@ func (o *GetMtasV2Params) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 			qrNamespace = *o.Namespace
 		}
 		qNamespace := qrNamespace
-		if qNamespace != "" {
-			if err := r.SetQueryParam("namespace", qNamespace); err != nil {
-				return err
-			}
+		if err := r.SetQueryParam("namespace", qNamespace); err != nil {
+			return err
 		}
 
 	}

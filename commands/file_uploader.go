@@ -23,22 +23,24 @@ import (
 type FileUploader struct {
 	files     []string
 	mtaClient mtaclient.MtaClientOperations
+	namespace string
 }
 
 //NewFileUploader creates a new file uploader for the specified service ID, files, and SLMP client
-func NewFileUploader(files []string, mtaClient mtaclient.MtaClientOperations) *FileUploader {
+func NewFileUploader(files []string, mtaClient mtaclient.MtaClientOperations, namespace string) *FileUploader {
 	return &FileUploader{
 		files:     files,
 		mtaClient: mtaClient,
+		namespace: namespace,
 	}
 }
 
 //UploadFiles uploads the files
-func (f *FileUploader) UploadFiles(namespace *string) ([]*models.FileMetadata, ExecutionStatus) {
+func (f *FileUploader) UploadFiles() ([]*models.FileMetadata, ExecutionStatus) {
 	log.Tracef("Uploading files '%v'\n", f.files)
 
 	// Get all files that are already uploaded
-	uploadedMtaFiles, err := f.mtaClient.GetMtaFiles(namespace)
+	uploadedMtaFiles, err := f.mtaClient.GetMtaFiles(&f.namespace)
 	if err != nil {
 		ui.Failed("Could not get mta files: %s", baseclient.NewClientError(err))
 		return nil, Failure
@@ -59,7 +61,7 @@ func (f *FileUploader) UploadFiles(namespace *string) ([]*models.FileMetadata, E
 		}
 
 		// Check if the files is already uploaded
-		if !isFileAlreadyUploaded(file, fileInfo, uploadedMtaFiles, &alreadyUploadedFiles) {
+		if !f.isFileAlreadyUploaded(file, fileInfo, uploadedMtaFiles, &alreadyUploadedFiles) {
 			// If not, add it to the list of uploaded files
 			fileToUpload, err := os.Open(file)
 			defer fileToUpload.Close()
@@ -89,7 +91,7 @@ func (f *FileUploader) UploadFiles(namespace *string) ([]*models.FileMetadata, E
 			ui.Say("  " + fullPath)
 
 			// Upload the file
-			uploaded, err := uploadInChunks(fullPath, fileToUpload, chunkSizeInMB, f.mtaClient, namespace)
+			uploaded, err := f.uploadInChunks(fullPath, fileToUpload, chunkSizeInMB)
 			if err != nil {
 				ui.Failed("Could not upload file %s: %s", terminal.EntityNameColor(fileToUpload.Name()), err.Error())
 				return nil, Failure
@@ -101,7 +103,7 @@ func (f *FileUploader) UploadFiles(namespace *string) ([]*models.FileMetadata, E
 	return uploadedFiles, Success
 }
 
-func uploadInChunks(fullPath string, fileToUpload os.File, chunkSizeInMB uint64, mtaClient mtaclient.MtaClientOperations, namespace *string) ([]*models.FileMetadata, error) {
+func (f *FileUploader) uploadInChunks(fullPath string, fileToUpload os.File, chunkSizeInMB uint64) ([]*models.FileMetadata, error) {
 	// Upload the file
 	err := util.ValidateChunkSize(fullPath, chunkSizeInMB)
 	if err != nil {
@@ -122,7 +124,7 @@ func uploadInChunks(fullPath string, fileToUpload os.File, chunkSizeInMB uint64,
 			return nil, fmt.Errorf("Could not open file part %s of file %s", filePart.Name(), fullPath)
 		}
 		uploaderGroup.Go(func() error {
-			file, err := uploadFilePart(filePart, fileToUpload.Name(), mtaClient, namespace)
+			file, err := f.uploadFilePart(filePart, fileToUpload.Name())
 			if err != nil {
 				return err
 			}
@@ -170,8 +172,8 @@ func attemptToRemoveFileParts(fileParts []string) {
 	}
 }
 
-func uploadFilePart(filePart *os.File, baseFileName string, client mtaclient.MtaClientOperations, namespace *string) (*models.FileMetadata, error) {
-	uploadedFile, err := client.UploadMtaFile(*filePart, namespace)
+func (f *FileUploader) uploadFilePart(filePart *os.File, baseFileName string) (*models.FileMetadata, error) {
+	uploadedFile, err := f.mtaClient.UploadMtaFile(*filePart, &f.namespace)
 	defer filePart.Close()
 	if err != nil {
 		return nil, fmt.Errorf("Could not create file %s: %s", terminal.EntityNameColor(baseFileName), baseclient.NewClientError(err))
@@ -179,10 +181,10 @@ func uploadFilePart(filePart *os.File, baseFileName string, client mtaclient.Mta
 	return uploadedFile, nil
 }
 
-func isFileAlreadyUploaded(newFilePath string, fileInfo os.FileInfo, oldFiles []*models.FileMetadata, alreadyUploadedFiles *[]*models.FileMetadata) bool {
+func (f *FileUploader) isFileAlreadyUploaded(newFilePath string, fileInfo os.FileInfo, oldFiles []*models.FileMetadata, alreadyUploadedFiles *[]*models.FileMetadata) bool {
 	newFileDigests := make(map[string]string)
 	for _, oldFile := range oldFiles {
-		if oldFile.Name != fileInfo.Name() {
+		if oldFile.Name != fileInfo.Name() || oldFile.Namespace != f.namespace {
 			continue
 		}
 		if newFileDigests[oldFile.DigestAlgorithm] == "" {
