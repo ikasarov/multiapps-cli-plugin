@@ -1,23 +1,23 @@
 #!/bin/bash
 
-GREEN='\033[0;32m'
-BORING='\033[0m' # No Color
+GREEN_COLOUR='\033[0;32m'
+DEFAULT_COLOUR='\033[0m' # No Color
 
 check_dir() {
 	if [ -d "$1" ]; then
-		echo -e "Folder $1 already exists.\nDo you want to ${GREEN}overwrite${BORING} the files?"
+		echo -e "Folder $1 already exists.\nDo you want to ${GREEN_COLOUR}overwrite${DEFAULT_COLOUR} the files? [y/n]"
 		
 		read answer
 		
 		if [ "$answer" != 'y' ] && [ "$answer" != 'Y' ] && [ "$answer" != 'yes' ] && [ "$answer" != 'YES' ]; then
-			echo -e "Edit regen folder name and ${GREEN}restart${BORING} script."
+			echo -e "Edit regen folder name and ${GREEN_COLOUR}restart${DEFAULT_COLOUR} script."
 			exit 1
 		fi
 		
 		rm -r "$1"
 	fi
 	
-	echo -e "${GREEN}Recreating folder...${BORING}"
+	echo -e "${GREEN_COLOUR}Recreating folder...${DEFAULT_COLOUR}"
 	mkdir "$1"
 }
 
@@ -43,9 +43,9 @@ definition_file_v2="${git_home}/multiapps-controller/com.sap.cloud.lm.sl.cf.api/
 check_dir "${regen_folder}"
 check_dir "${regen_folder_v2}"
 
-echo -e "Assuming controller project is under this parent dir: ${GREEN}${git_home}${BORING}"
-echo -e "Assuming plugin project is under this parent dir: ${GREEN}${go_home}${BORING}"
-echo -e "Reading from\n\t${GREEN}${definition_file}\n\t${definition_file_v2}${BORING}\nGenerating in \n\t${GREEN}${regen_folder}\n\t${regen_folder_v2}${BORING}"
+echo -e "Assuming controller project is under this parent dir: ${GREEN_COLOUR}${git_home}${DEFAULT_COLOUR}"
+echo -e "Assuming plugin project is under this parent dir: ${GREEN_COLOUR}${go_home}${DEFAULT_COLOUR}"
+echo -e "Reading from\n\t${GREEN_COLOUR}${definition_file}\n\t${definition_file_v2}${DEFAULT_COLOUR}\nGenerating in \n\t${GREEN_COLOUR}${regen_folder}\n\t${regen_folder_v2}${DEFAULT_COLOUR}"
 
 cd "${git_home%/*}"
 mvn -f "${git_home}/multiapps-controller/" clean package -DskipTests=true -pl=com.sap.cloud.lm.sl.cf.api

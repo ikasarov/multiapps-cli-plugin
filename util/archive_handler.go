@@ -28,7 +28,7 @@ func GetMtaDescriptorFromArchive(mtaArchiveFilePath string) (MtaDescriptor, erro
 	// Open the mta archive
 	mtaArchiveReader, err := zip.OpenReader(mtaArchiveFilePath)
 	if err != nil {
-		return descriptor, err
+		return MtaDescriptor{}, err
 	}
 	defer mtaArchiveReader.Close()
 

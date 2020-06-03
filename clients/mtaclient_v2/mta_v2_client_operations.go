@@ -5,7 +5,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 )
 
-// MtaClientOperations drun drun drun x2
+// interface for all operations provided by the v2 client
 type MtaV2ClientOperations interface {
 	GetMtas(name, namespace *string, spaceGuid string) ([]*models.Mta, error)
 	GetMtasForThisSpace(name, namespace *string) ([]*models.Mta, error)

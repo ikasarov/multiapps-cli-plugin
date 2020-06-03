@@ -29,7 +29,7 @@ func (c *MtaCommand) GetPluginCommand() plugin.Command {
 		UsageDetails: plugin.Usage{
 			Usage: "cf mta MTA_ID [--namespace NAMESPACE] [-u URL]",
 			Options: map[string]string{
-				util.GetShortOption(namespaceOpt): "namespace of the requested mta, empty by default",
+				util.GetShortOption(namespaceOpt): "(EXPERIMENTAL) namespace of the requested mta, empty by default",
 				"u":                               "Deploy service URL, by default 'deploy-service.<system-domain>'",
 			},
 		},
@@ -59,7 +59,6 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 	}
 	mtaID := args[0]
-	ui.Say("Command line value for namespace: %s\n", terminal.EntityNameColor(namespace))
 
 	context, err := c.GetContext()
 	if err != nil {
@@ -91,7 +90,7 @@ func (c *MtaCommand) Execute(args []string) ExecutionStatus {
 		return Failure
 
 	}
-	if len(mtas) != 1 {
+	if len(mtas) > 1 {
 		ui.Failed("Multiple multi-target apps exist for name %s, please enter namespace", terminal.EntityNameColor(mtaID))
 		return Failure
 	}

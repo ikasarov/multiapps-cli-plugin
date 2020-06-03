@@ -49,8 +49,7 @@ func (c *UndeployCommand) GetPluginCommand() plugin.Command {
 				util.GetShortOption(noFailOnMissingPermissionsOpt): "Do not fail on missing permissions for admin operations",
 				util.GetShortOption(abortOnErrorOpt):               "Auto-abort the process on any errors",
 				util.GetShortOption(retriesOpt):                    "Retry the operation N times in case a non-content error occurs (default 3)",
-				// TODO: find out what's going on here??
-				util.GetShortOption(namespaceOpt): "Specify the (optional) namespace the target mta is in",
+				util.GetShortOption(namespaceOpt):                  "(EXPERIMENTAL) Specify the (optional) namespace the target mta is in",
 			},
 		},
 	}

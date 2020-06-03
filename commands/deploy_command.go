@@ -19,12 +19,10 @@ import (
 )
 
 const (
-	extDescriptorsOpt = "e"
-	timeoutOpt        = "t"
-	versionRuleOpt    = "version-rule"
-	noStartOpt        = "no-start"
-	//useNamespacesOpt           = "use-namespaces"
-	//noNamespacesForServicesOpt = "no-namespaces-for-services"
+	extDescriptorsOpt          = "e"
+	timeoutOpt                 = "t"
+	versionRuleOpt             = "version-rule"
+	noStartOpt                 = "no-start"
 	deleteServiceKeysOpt       = "delete-service-keys"
 	keepFilesOpt               = "keep-files"
 	skipOwnershipValidationOpt = "skip-ownership-validation"
@@ -96,7 +94,7 @@ func (c *DeployCommand) GetPluginCommand() plugin.Command {
 				moduleOpt:                              "Deploy list of modules which are contained in the deployment descriptor, in the current location",
 				resourceOpt:                            "Deploy list of resources which are contained in the deployment descriptor, in the current location",
 				util.GetShortOption(noStartOpt):        "Do not start apps",
-				util.GetShortOption(namespaceOpt):      "Namespace for the mta, applied to app and service names as well",
+				util.GetShortOption(namespaceOpt):      "(EXPERIMENTAL) Namespace for the mta, applied to app and service names as well",
 				util.GetShortOption(deleteServicesOpt): "Recreate changed services / delete discontinued services",
 				util.GetShortOption(deleteServiceKeysOpt):          "Delete existing service keys and apply the new ones",
 				util.GetShortOption(deleteServiceBrokersOpt):       "Delete discontinued service brokers",
@@ -269,8 +267,6 @@ func (c *DeployCommand) Execute(args []string) ExecutionStatus {
 		ui.Failed("Could not get MTA ID from deployment descriptor: %s", err)
 		return Failure
 	}
-
-	ui.Say("Command line value for namespace: %s\n", terminal.EntityNameColor(namespace))
 
 	// Check for an ongoing operation for this MTA ID and abort it
 	wasAborted, err := c.CheckOngoingOperation(descriptor.ID, namespace, host, force)
