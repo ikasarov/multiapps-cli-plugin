@@ -8,78 +8,78 @@ const XCsrfHeader = "X-Csrf-Header"
 const XCsrfToken = "X-Csrf-Token"
 const CsrfTokenHeaderRequiredValue = "Required"
 
-type DefaultCsrfTokenUpdater struct {
+type DefaultCsrfTokenManager struct {
 	request          *http.Request
 	transport        *Transport
 	csrfTokenFetcher CsrfTokenFetcher
 }
 
-func NewDefaultCsrfTokenUpdater(transport *Transport, request *http.Request, csrfTokenFetcher CsrfTokenFetcher) *DefaultCsrfTokenUpdater {
-	return &DefaultCsrfTokenUpdater{request: request, transport: transport, csrfTokenFetcher: csrfTokenFetcher}
+func NewDefaultCsrfTokenManager(transport *Transport, request *http.Request) *DefaultCsrfTokenManager {
+	return &DefaultCsrfTokenManager{request: request, transport: transport, csrfTokenFetcher: NewDefaultCsrfTokenFetcher(transport)}
 }
 
-func (c *DefaultCsrfTokenUpdater) updateCsrfToken() error {
+func (c *DefaultCsrfTokenManager) updateToken() error {
 	if !c.shouldInitialize() {
 		return nil
 	}
-	err := c.initializeToken(false, getCsrfTokenUrl(c.request))
+	err := c.initializeToken(false)
 	if err != nil {
 		return err
 	}
 
-	c.updateCurrentCsrfToken(c.request, c.transport)
+	c.updateTokenInRequest()
 
 	return nil
 }
 
-func (c *DefaultCsrfTokenUpdater) initializeToken(forceInitializing bool, url string) error {
-	if forceInitializing || !c.transport.Csrf.IsInitialized {
+func (c *DefaultCsrfTokenManager) initializeToken(forceInitializing bool) error {
+	if forceInitializing || !c.transport.csrf.IsInitialized {
 		var err error
-		csrfToken, err := c.csrfTokenFetcher.FetchCsrfToken(url, c.request)
+		csrfToken, err := c.csrfTokenFetcher.FetchCsrfToken(getCsrfTokenUrl(c.request), c.request)
 		if csrfToken == nil {
 			return nil
 		}
-		c.transport.Csrf.Header, c.transport.Csrf.Token = csrfToken.CsrfTokenHeader, csrfToken.CsrfTokenValue
+		c.transport.csrf.Header, c.transport.csrf.Token = csrfToken.CsrfTokenHeader, csrfToken.CsrfTokenValue
 		if err != nil {
 			return err
 		}
-		c.transport.Csrf.IsInitialized = true
+		c.transport.csrf.IsInitialized = true
 	}
 
 	return nil
 }
 
-func (c *DefaultCsrfTokenUpdater) isRetryNeeded(response *http.Response) (bool, error) {
+func (c *DefaultCsrfTokenManager) refreshTokenIfNeeded(response *http.Response) (bool, error) {
 	if !c.isProtectionRequired(c.request, c.transport) {
 		return false, nil
 	}
-	if c.transport.Csrf.IsInitialized && (response.StatusCode == http.StatusForbidden) {
+	if c.transport.csrf.IsInitialized && (response.StatusCode == http.StatusForbidden) {
 		csrfToken := response.Header.Get(XCsrfToken)
 
 		if CsrfTokenHeaderRequiredValue == csrfToken {
-			err := c.initializeToken(true, getCsrfTokenUrl(c.request))
+			err := c.initializeToken(true)
 			if err != nil {
 				return false, err
 			}
-
-			return c.transport.Csrf.Token != "", nil
+			// the token was refreshed successfully so the client should retry the request
+			return c.transport.csrf.Token != "", nil
 		}
 	}
 
 	return false, nil
 }
 
-func (c *DefaultCsrfTokenUpdater) updateCurrentCsrfToken(request *http.Request, t *Transport) {
-	if c.transport.Csrf.Token != "" && c.transport.Csrf.Header != "" {
-		request.Header.Set(XCsrfToken, t.Csrf.Token)
-		request.Header.Set(XCsrfHeader, t.Csrf.Header)
+func (c *DefaultCsrfTokenManager) updateTokenInRequest() {
+	if c.transport.csrf.Token != "" && c.transport.csrf.Header != "" {
+		c.request.Header.Set(XCsrfToken, c.transport.csrf.Token)
+		c.request.Header.Set(XCsrfHeader, c.transport.csrf.Header)
 	}
 }
 
-func (c *DefaultCsrfTokenUpdater) isProtectionRequired(req *http.Request, t *Transport) bool {
-	return !t.Csrf.NonProtectedMethods[req.Method]
+func (c *DefaultCsrfTokenManager) isProtectionRequired(req *http.Request, t *Transport) bool {
+	return !t.csrf.NonProtectedMethods[req.Method]
 }
 
-func (c *DefaultCsrfTokenUpdater) shouldInitialize() bool {
+func (c *DefaultCsrfTokenManager) shouldInitialize() bool {
 	return c.request != nil && c.isProtectionRequired(c.request, c.transport)
 }

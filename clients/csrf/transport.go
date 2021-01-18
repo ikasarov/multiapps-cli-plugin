@@ -1,8 +1,9 @@
 package csrf
 
 import (
-	"github.com/jinzhu/copier"
 	"net/http"
+
+	"github.com/jinzhu/copier"
 )
 
 type Csrf struct {
@@ -17,36 +18,36 @@ type Cookies struct {
 }
 
 type Transport struct {
-	Transport http.RoundTripper
-	Csrf      *Csrf
-	Cookies   *Cookies
+	originalTransport http.RoundTripper
+	csrf              *Csrf
+	cookies           *Cookies
 }
 
 func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := http.Request{}
 	copier.Copy(&req2, req)
 
-	if t.Cookies != nil {
-		UpdateCookiesIfNeeded(t.Cookies.Cookies, &req2)
+	if t.cookies != nil {
+		UpdateCookiesIfNeeded(t.cookies.Cookies, &req2)
 	}
 
-	csrfTokenManager := NewDefaultCsrfTokenUpdater(&t, &req2, NewDefaultCsrfTokenFetcher(&t))
+	csrfTokenManager := NewDefaultCsrfTokenManager(&t, &req2)
 
-	err := csrfTokenManager.updateCsrfToken()
+	err := csrfTokenManager.updateToken()
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := t.Transport.RoundTrip(&req2)
+	res, err := t.originalTransport.RoundTrip(&req2)
 	if err != nil {
 		return nil, err
 	}
-	isRetryNeeded, err := csrfTokenManager.isRetryNeeded(res)
+	tokenWasRefreshed, err := csrfTokenManager.refreshTokenIfNeeded(res)
 	if err != nil {
 		return nil, err
 	}
 
-	if isRetryNeeded {
+	if tokenWasRefreshed {
 		return nil, &ForbiddenError{}
 	}
 

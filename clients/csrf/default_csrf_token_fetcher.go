@@ -1,10 +1,11 @@
 package csrf
 
 import (
-	"github.com/cloudfoundry-incubator/multiapps-cli-plugin/clients/csrf/csrf_paramters"
-	"github.com/cloudfoundry/cli/plugin"
 	"net/http"
 	"os"
+
+	"github.com/cloudfoundry-incubator/multiapps-cli-plugin/clients/csrf/csrf_paramters"
+	"github.com/cloudfoundry/cli/plugin"
 )
 
 const CsrfTokenHeaderFetchValue = "Fetch"
@@ -38,7 +39,7 @@ func (c *DefaultCsrfTokenFetcher) FetchCsrfToken(url string, currentRequest *htt
 	fetchTokenRequest.Header.Set(AuthorizationHeader, token)
 	UpdateCookiesIfNeeded(currentRequest.Cookies(), fetchTokenRequest)
 
-	response, err := c.transport.Transport.RoundTrip(fetchTokenRequest)
+	response, err := c.transport.originalTransport.RoundTrip(fetchTokenRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -46,9 +47,9 @@ func (c *DefaultCsrfTokenFetcher) FetchCsrfToken(url string, currentRequest *htt
 		fetchTokenRequest.Header.Del(CookieHeader)
 		UpdateCookiesIfNeeded(response.Cookies(), fetchTokenRequest)
 
-		c.transport.Cookies.Cookies = fetchTokenRequest.Cookies()
+		c.transport.cookies.Cookies = fetchTokenRequest.Cookies()
 
-		response, err = c.transport.Transport.RoundTrip(fetchTokenRequest)
+		response, err = c.transport.originalTransport.RoundTrip(fetchTokenRequest)
 
 		if err != nil {
 			return nil, err
