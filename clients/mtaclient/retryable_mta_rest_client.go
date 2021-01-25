@@ -17,12 +17,12 @@ type RetryableMtaRestClient struct {
 
 func NewRetryableMtaRestClient(host, spaceID string, rt http.RoundTripper, jar http.CookieJar, tokenFactory baseclient.TokenFactory) RetryableMtaRestClient {
 	mtaClient := NewMtaClient(host, spaceID, rt, jar, tokenFactory)
-	return RetryableMtaRestClient{mtaClient: mtaClient, MaxRetriesCount: 3, RetryInterval: time.Second * 3}
+	return RetryableMtaRestClient{mtaClient: mtaClient, MaxRetriesCount: 18, RetryInterval: time.Second * 10}
 }
 
 func NewRetryableManagementMtaRestClient(host string, rt http.RoundTripper, jar http.CookieJar, tokenFactory baseclient.TokenFactory) RetryableMtaRestClient {
 	mtaManagementClient := NewManagementMtaClient(host, rt, jar, tokenFactory)
-	return RetryableMtaRestClient{mtaClient: mtaManagementClient, MaxRetriesCount: 3, RetryInterval: time.Second * 3}
+	return RetryableMtaRestClient{mtaClient: mtaManagementClient, MaxRetriesCount: 18, RetryInterval: time.Second * 10}
 }
 
 func (c RetryableMtaRestClient) ExecuteAction(operationID, actionID string) (ResponseHeader, error) {
