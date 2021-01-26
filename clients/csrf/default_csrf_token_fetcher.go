@@ -41,53 +41,21 @@ func (c *DefaultCsrfTokenFetcher) FetchCsrfToken(url string, currentRequest *htt
 	fetchTokenRequest.Header.Set(AuthorizationHeader, token)
 	UpdateCookiesIfNeeded(currentRequest.Cookies(), fetchTokenRequest)
 
-	log.Tracef("Fetching CSRF Token from '" + url + "'\nThe sticky-session headers are: " + prettyPrintCookies(fetchTokenRequest.Cookies()) + "\n")
-
 	response, err := c.transport.OriginalTransport.RoundTrip(fetchTokenRequest)
 	if err != nil {
 		return nil, err
 	}
+	// if there are set-cookie headers present in response - persist them in Transport
 	if len(response.Cookies()) != 0 {
-		// TODO: check if this is enough or should rather validate for the specific headers present
-		log.Tracef("Set-Cookie headers present in response: '" + prettyPrintCookies(response.Cookies()) + ", updating and resending'\n")
-		fetchTokenRequest.Header.Del(CookieHeader)
-		UpdateCookiesIfNeeded(response.Cookies(), fetchTokenRequest)
+		log.Tracef("Set-Cookie headers present in response, updating current with '" + prettyPrintCookies(response.Cookies()) + "'\n")
 
-		c.transport.Cookies.Cookies = fetchTokenRequest.Cookies()
-
-		log.Tracef("Fetching CSRF Token from '" + url + "'\nThe sticky-session headers are: " + prettyPrintCookies(fetchTokenRequest.Cookies()) + "\n")
-
-		response, err = c.transport.OriginalTransport.RoundTrip(fetchTokenRequest)
-		if len(response.Cookies()) != 0 {
-			log.Tracef("Set-Cookie headers present in response: '" + prettyPrintCookies(response.Cookies()) + ", updating and resending'\n")
-		}
-
-		if err != nil {
-			return nil, err
-		}
+		c.transport.Cookies.Cookies = response.Cookies()
 	}
 
-	log.Tracef("CSRF Token fetched '" + response.Header.Get(XCsrfToken) + "'\n")
+	log.Tracef("New CSRF Token fetched '" + response.Header.Get(XCsrfToken) + "'\n")
 	return &csrf_parameters.CsrfRequestHeader{response.Header.Get(XCsrfHeader), response.Header.Get(XCsrfToken)}, nil
 }
 
 func getCsrfTokenUrl(req *http.Request) string {
 	return string(req.URL.Scheme) + "://" + string(req.URL.Host) + CsrfTokensApi
-}
-
-func UpdateCookiesIfNeeded(cookies []*http.Cookie, request *http.Request) {
-	if cookies != nil {
-		request.Header.Del(CookieHeader)
-		for _, cookie := range cookies {
-			request.AddCookie(cookie)
-		}
-	}
-}
-
-func prettyPrintCookies(cookies []*http.Cookie) string {
-	result := ""
-	for _, cookie := range cookies {
-		result = result + cookie.String() + " "
-	}
-	return result
 }

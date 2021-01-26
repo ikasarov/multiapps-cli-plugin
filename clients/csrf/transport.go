@@ -2,7 +2,7 @@ package csrf
 
 import (
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/cloudfoundry-incubator/multiapps-cli-plugin/log"
 	"github.com/jinzhu/copier"
@@ -29,27 +29,15 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req2 := http.Request{}
 	copier.Copy(&req2, req)
 
-	if t.Cookies != nil {
-		UpdateCookiesIfNeeded(t.Cookies.Cookies, &req2)
-	}
+	UpdateCookiesIfNeeded(t.Cookies.Cookies, &req2)
 
-	tokenNotYetInitialized := t.Csrf.IsInitialized == false
 	csrfTokenManager := NewDefaultCsrfTokenManager(&t, &req2)
-
 	err := csrfTokenManager.updateToken()
 	if err != nil {
 		return nil, err
 	}
-	if t.Csrf.IsInitialized {
-		log.Tracef("Sending a protected request with CSRF '" + t.Csrf.Token + "'\n")
-	}
 
-	if tokenNotYetInitialized && t.Csrf.IsInitialized {
-		log.Tracef("Sleeping before first protected request!\n")
-		time.Sleep(time.Second * 90)
-	}
-
-	log.Tracef("Sending a request with CSRF '" + req2.Header.Get("X-Csrf-Header") + " / " + req2.Header.Get("X-Csrf-Token") + "'\n")
+	log.Tracef("Sending a request with CSRF '" + req2.Header.Get("X-Csrf-Header") + " : " + req2.Header.Get("X-Csrf-Token") + "'\n")
 	log.Tracef("The sticky-session headers are: " + prettyPrintCookies(req2.Cookies()) + "\n")
 	res, err := t.OriginalTransport.RoundTrip(&req2)
 	if err != nil {
@@ -61,10 +49,26 @@ func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	if tokenWasRefreshed {
-		log.Tracef("Response code '" + string(res.StatusCode) + "' from bad token\n")
-		log.Tracef("Will retry with newer CSRF!\n")
+		log.Tracef("Response code '" + strconv.Itoa(res.StatusCode) + "' from bad token. Must Retry.\n")
 		return nil, &ForbiddenError{}
 	}
 
 	return res, err
+}
+
+func UpdateCookiesIfNeeded(cookies []*http.Cookie, request *http.Request) {
+	if cookies != nil && len(cookies) > 0 {
+		request.Header.Del(CookieHeader)
+		for _, cookie := range cookies {
+			request.AddCookie(cookie)
+		}
+	}
+}
+
+func prettyPrintCookies(cookies []*http.Cookie) string {
+	result := ""
+	for _, cookie := range cookies {
+		result = result + cookie.String() + " "
+	}
+	return result
 }
